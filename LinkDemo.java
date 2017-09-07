@@ -1,4 +1,8 @@
-//将node类定义在Link类之中，作为内部类，避免让用户直接接触到
+// 将node类定义在Link类之中，作为内部私有类，避免让用户直接接触到
+/**
+* Link类使用户主要操作的工具类，而内部类
+* Node类负责节点的关系维护
+*/
 class Link <T>{
 	private Node root ;
 	
@@ -87,7 +91,7 @@ class Link <T>{
 	
 	
 	/****************** 以下为内部类的定义： NOde类*******/
-	class Node {
+	private class Node {
 	private T data ;
 	private Node Next ;
 	
