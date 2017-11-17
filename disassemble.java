@@ -14,7 +14,7 @@ public class disassemble {
 		// define register and memory
 		int[] GPR = new int[32];
 		int[] data = new int[24];
-		// define the PC num
+		// define the initial PC num
 		int PC = 256;
 
 		// decode,and return disassemble Strings
@@ -26,9 +26,16 @@ public class disassemble {
 		show(deassems, null);
 		// writer the deassems back to file
 		WriteID("disassembly.txt", deassems);
-
 	}
-
+	/**
+	 * 
+	* @Title: readtxt
+	* @Description: 读取文件，将二进制待解码的机器码txt文件读入
+	* @param input_path，文件路径
+	* @return String[] ，instruments，按行将待解码的文件放入字符串数组 instruments中
+	* @throws
+	* @date 2017年11月17日 下午8:20:35
+	 */
 	public static String[] readtxt(String input_path) {
 		StringBuilder result = new StringBuilder();
 		String[] instruments = new String[100];
@@ -50,16 +57,12 @@ public class disassemble {
 
 	/**
 	 * 
-	 * @Title: show
-	 * @Description:
-	 * @param @param
-	 *            Instruments
-	 * @param @param
-	 *            data 设定文件
-	 * @return void 返回类型
-	 * @throws @author
-	 *             ypx
-	 * @date 2017年11月16日 下午9:28:50
+	* @Title: show
+	* @Description: 输出从文件读入的指令集用，检验正误
+	* @param Instruments：输入解码后的汇编指令集
+	* @param data ：内存数据区，全局变量
+	* @return void   
+	* @date 2017年11月17日 下午8:25:33
 	 */
 	public static void show(String[] Instruments, int[] data) {
 		for (int i = 0; Instruments[i] != null; i++) {
@@ -69,20 +72,13 @@ public class disassemble {
 
 	/**
 	 * 
-	 * @Title: decode
-	 * @Description: to decode the input file(a assembles bitstream file)
-	 * @param @param
-	 *            Inst : the string read from input file
-	 * @param @param
-	 *            data :
-	 * @param @param
-	 *            PC
-	 * @param @return
-	 *            设定文件
-	 * @return String[] 返回类型
-	 * @throws @author
-	 *             ypx
-	 * @date 2017年11月16日 下午9:29:29
+	* @Title: decode
+	* @Description: 对二进制的机器指令集进行解码
+	* @param Inst：从文件读入的汇编指令，每个字符串保存读入的一行指令
+	* @param data：内存中的数据区，从汇编码中读入初始值 
+	* @param PC：传入第一条指令的执行地址 
+	* @return String[] ：二进制机器码码以及对应的解码后的汇编指令，BREAK指令后面为初始化内存数据
+	* @date 2017年11月17日 下午8:26:30
 	 */
 	public static String[] decode(String[] Inst, int[] data, int PC) {
 		int len = Inst.length;
@@ -269,7 +265,19 @@ public class disassemble {
 		}
 		return string_result;
 	}
-
+	
+	/**
+	 * 
+	* @Title: GPR_and_Data
+	* @Description: 对指令执行过程进行仿真，并输出每条指令操作后的寄存器以及内存数据值，输入结果直接写入文件
+	* @param Inst：二进制码指令集
+	* @param GPR：寄存器数组，全局变量
+	* @param data：内存数据数组，全局变量
+	* @param PC：初始的指令地址，程序执行后为当前指令地址
+	* @param OutPutFile ：需要输出的文件路径
+	* @return void   
+	* @date 2017年11月17日 下午8:32:01
+	 */
 	private static void GPR_and_Data(String[] Inst, int[] GPR, int[] data, int PC, String OutPutFile) {
 		// TODO Auto-generated method stub
 		int PC_now = PC;
@@ -284,19 +292,21 @@ public class disassemble {
 			String temp;
 			String code = null;
 			if (!is_break) {
+				// 解析出来指令码及指令类型
 				String in_type = Inst[i].substring(0, 2);
 				String in_opcode = Inst[i].substring(2, 6);
-
+				// 解析需要的操作数
 				int rs_6_11 = Integer.parseInt(Inst[i].substring(6, 11), 2);
 				int base = rs_6_11;
 				int rt_11_16 = Integer.parseInt(Inst[i].substring(11, 16), 2);
 				int rd_16_21 = Integer.parseInt(Inst[i].substring(16, 21), 2);
 				// SLL sa
 				int sa = Integer.parseInt(Inst[i].substring(21, 26), 2);
-
+				
 				int immediate = Integer.parseInt(Inst[i].substring(16, 32), 2);
 				int offset = immediate;
 				int offset_left2 = offset << 2;
+				
 				// J target
 				int instr_index = Integer.parseInt(Inst[i].substring(6, 32), 2) << 2;
 
@@ -501,7 +511,16 @@ public class disassemble {
 		}
 		System.out.println("***************ENDEND************");
 	}
-
+	
+	/**
+	 * 
+	* @Title: WriteID
+	* @Description: 将解码后的汇编指令写入制定文件
+	* @param fileName：需要写入的文件路径及文件名，字符串
+	* @param deassems ：解码后的汇编指令集
+	* @return void
+	* @date 2017年11月17日 下午8:35:20
+	 */
 	public static void WriteID(String fileName, String[] deassems) {
 		try {
 			// 打开一个写文件器，构造函数中的第二个参数true表示以追加形式写文件
@@ -510,7 +529,6 @@ public class disassemble {
 			while (deassems[i] != null) {
 				writer.write(deassems[i]);
 				writer.write('\n');
-				System.out.println("write lines: " + i);
 				i++;
 			}
 			writer.close();
@@ -519,6 +537,17 @@ public class disassemble {
 		}
 	}
 
+	/**
+	 * 
+	* @Title: WriteSimulation
+	* @Description: 将寄存器和内存数据写入文件，供程序执行仿真时使用
+	* @param @param fileName：需要写入数据的文件路径及名称
+	* @param @param mem：内存数据区或者寄存器数据区
+	* @param @param temp：按要求，写入的指令名称及地址
+	* @param @param type ：本次写入数据时，写寄存器还是内存
+	* @return void   
+	* @date 2017年11月17日 下午8:37:38
+	 */
 	public static void WriteSimulation(String fileName, int[] mem, String temp, String type) {
 		try {
 			// 打开一个写文件器，构造函数中的第二个参数true表示以追加形式写文件
@@ -534,7 +563,6 @@ public class disassemble {
 						} else {
 							writer.write("R" + i + ":");
 						}
-
 					} else {
 						writer.write(340 + i * 4 + ":");
 					}
@@ -543,7 +571,7 @@ public class disassemble {
 				if ((i + 1) % 8 == 0 && i < mem.length - 1) {
 					writer.write('\n');
 				}
-				System.out.println("write lines: " + i);
+//				System.out.println("write lines: " + i);
 			}
 			writer.write("\n\n");
 			writer.close();
