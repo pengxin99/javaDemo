@@ -1,10 +1,12 @@
+/* On my honor, I have neither given nor received unauthorized aid on this assignment. */
+
 
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 
-public class disassemble {
+public class MIPSsim {
 	public static void main(String[] args) {
 		// to define the path
 		String input_path = args[0] ;
@@ -23,7 +25,7 @@ public class disassemble {
 		// and will write the number to file every Cycle
 		GPR_and_Data(InSet, GPR, data, PC, "simulation.txt");
 
-		show(deassems, null);
+		//show(deassems, null);
 		// writer the deassems back to file
 		WriteID("disassembly.txt", deassems);
 	}
@@ -287,8 +289,8 @@ public class disassemble {
 		boolean is_break = false;
 		int cycle = 1;
 		for (int i = 0; !is_break; i = ((PC_now - PC_base) / 4)) {
-			System.out.println("--------------------");
-			System.out.print("Cycle:" + cycle + "\t" + PC_now + "\t");
+			//System.out.println("--------------------");
+			//System.out.print("Cycle:" + cycle + "\t" + PC_now + "\t");
 			String temp;
 			String code = null;
 			if (!is_break) {
@@ -315,70 +317,70 @@ public class disassemble {
 					// J
 					case "0000":
 						code = "J " + "#" + instr_index;
-						System.out.println(code);
+					
 						PC_now = instr_index;
 						break;
 					// JR
 					case "0001":
 						code = "JR " + "R" + rs_6_11;
-						System.out.println(code);
+					
 						PC_now = GPR[rs_6_11];
 						break;
 					// BEQ
 					case "0010":
 						code = "BEQ " + "R" + rs_6_11 + ", R" + rt_11_16 + ", #" + offset_left2;
-						System.out.println(code);
+					
 						if (GPR[rs_6_11] == GPR[rt_11_16])
 							PC_now = PC + offset_left2 + 4;
 						break;
 					// BLTZ
 					case "0011":
 						code = "BLTZ " + "R" + rs_6_11 + ", #" + offset_left2;
-						System.out.println(code);
+					
 						if (GPR[rs_6_11] < 0)
 							PC_now = PC + offset_left2 + 4;
 						break;
 					// BGTZ
 					case "0100":
 						code = "BGTZ " + "R" + rs_6_11 + ", #" + offset_left2;
-						System.out.println(code);
+					
 						if (GPR[rs_6_11] > 0)
 							PC_now = PC + offset_left2 + 4;
 						break;
 					// BREAK
 					case "0101":
 						code = "BREAK";
-						System.out.println(code);
+					
 						is_break = true;
 						break;
 					// SW
 					case "0110":
 						code = "SW " + "R" + rt_11_16 + ", " + offset + "(R" + base + ")";
-						System.out.println(code);
+					
 						data[(offset - 340 + GPR[base]) / 4] = GPR[rt_11_16];
 						break;
 					// LW
 					case "0111":
 						code = "LW " + "R" + rt_11_16 + ", " + offset + "(R" + base + ")";
-						System.out.println(code);
+						
 						GPR[rt_11_16] = data[(offset - 340 + GPR[base]) / 4];
 						break;
 					// SLL
 					case "1000":
 						code = "SLL " + "R" + rd_16_21 + ", R" + rt_11_16 + ", #" + sa;
-						System.out.println(code);
+						
 						GPR[rd_16_21] = GPR[rt_11_16] << sa;
 						break;
 					// SRL
 					case "1001":
 						code = "SRL " + "R" + rd_16_21 + ", R" + rt_11_16 + ", #" + sa;
-						System.out.println(code);
+						
 						GPR[rd_16_21] = GPR[rt_11_16] >> sa;
 						break;
 					// SRA
 					case "1010":
 						code = "SRA " + "R" + rd_16_21 + ", R" + rt_11_16 + ", #" + sa;
-						System.out.println(code);
+						
 						// GPR[rd_16_21] = GPR[rt_11_16] >> sa;
 						int xsrl = GPR[rt_11_16] >> sa;
 						int w = 4 << 3;
@@ -387,11 +389,11 @@ public class disassemble {
 					// NOP
 					case "1011":
 						code = "NOP";
-						System.out.println("NOP");
+						
 						break;
 					// default
 					default:
-						System.out.println("NULLL!!");
+						
 						break;
 					}
 
@@ -400,7 +402,7 @@ public class disassemble {
 					// ADD
 					case "0000":
 						code = "ADD " + "R" + rd_16_21 + ", R" + rs_6_11 + ", R" + rt_11_16;
-						System.out.println(code);
+						
 						try {
 							GPR[rd_16_21] = GPR[rs_6_11] + GPR[rt_11_16];
 						} catch (Exception e) {
@@ -411,7 +413,7 @@ public class disassemble {
 					// SUB
 					case "0001":
 						code = "SUB " + "R" + rd_16_21 + ", R" + rs_6_11 + ", R" + rt_11_16;
-						System.out.println(code);
+						
 						try {
 							GPR[rd_16_21] = GPR[rs_6_11] - GPR[rt_11_16];
 						} catch (Exception e) {
@@ -422,7 +424,7 @@ public class disassemble {
 					// MUL
 					case "0010":
 						code = "MUL " + "R" + rd_16_21 + ", R" + rs_6_11 + ", R" + rt_11_16;
-						System.out.println(code);
+						
 						try {
 							GPR[rd_16_21] = GPR[rs_6_11] * GPR[rt_11_16];
 						} catch (Exception e) {
@@ -433,37 +435,37 @@ public class disassemble {
 					// AND
 					case "0011":
 						code = "AND " + "R" + rd_16_21 + ", R" + rs_6_11 + ", R" + rt_11_16;
-						System.out.println(code);
+						
 						GPR[rd_16_21] = GPR[rs_6_11] & GPR[rd_16_21];
 						break;
 					// OR
 					case "0100":
 						code = "OR " + "R" + rd_16_21 + ", R" + rs_6_11 + ", R" + rt_11_16;
-						System.out.println(code);
+						
 						GPR[rd_16_21] = GPR[rs_6_11] | GPR[rd_16_21];
 						break;
 					// XOR
 					case "0101":
 						code = "XOR " + "R" + rd_16_21 + ", R" + rs_6_11 + ", R" + rt_11_16;
-						System.out.println(code);
+						
 						GPR[rd_16_21] = GPR[rs_6_11] ^ GPR[rd_16_21];
 						break;
 					// NOR
 					case "0110":
 						code = "NOR " + "R" + rd_16_21 + ", R" + rs_6_11 + ", R" + rt_11_16;
-						System.out.println(code);
+						
 						GPR[rd_16_21] = ~(GPR[rs_6_11] | GPR[rd_16_21]);
 						break;
 					// SLT
 					case "0111":
 						code = "SLT " + "R" + rd_16_21 + ", R" + rs_6_11 + ", R" + rt_11_16;
-						System.out.println(code);
+						
 						GPR[rd_16_21] = (GPR[rs_6_11] < GPR[rd_16_21]) ? 1 : 0;
 						break;
 					// ADDI
 					case "1000":
 						code = "ADDI " + "R" + rt_11_16 + ", R" + rs_6_11 + ", #" + immediate;
-						System.out.println(code);
+						
 						try {
 							GPR[rt_11_16] = GPR[rs_6_11] + immediate;
 						} catch (Exception e) {
@@ -474,24 +476,24 @@ public class disassemble {
 					// ANDI
 					case "1001":
 						code = "ANDI " + "R" + rt_11_16 + ", R" + rs_6_11 + ", #" + immediate;
-						System.out.println(code);
+						
 						GPR[rd_16_21] = GPR[rs_6_11] & immediate;
 						break;
 					// ORI
 					case "1010":
 						code = "ORI " + "R" + rt_11_16 + ", R" + rs_6_11 + ", #" + immediate;
-						System.out.println(code);
+						
 						GPR[rt_11_16] = GPR[rs_6_11] | immediate;
 						break;
 					// XORI
 					case "1011":
 						code = "XORI " + "R" + rt_11_16 + ", R" + rs_6_11 + ", #" + immediate;
-						System.out.println(code);
+						
 						GPR[rt_11_16] = GPR[rs_6_11] ^ immediate;
 						break;
 					// default
 					default:
-						System.out.println("NULLL!!");
+						
 						break;
 					}
 				}
@@ -501,7 +503,7 @@ public class disassemble {
 				WriteSimulation(OutPutFile, data, "Data", "d");
 
 			} else {
-				System.out.println("break!");
+				
 				break;
 			}
 
@@ -509,7 +511,7 @@ public class disassemble {
 			PC = PC_now;
 			cycle++;
 		}
-		System.out.println("***************ENDEND************");
+		
 	}
 	
 	/**
