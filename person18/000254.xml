@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<annotation>
+   <folder>person18</folder>
+   <filename>000254</filename>
+   <source>
+      <database>UAV91</database>
+   </source>
+   <size>
+      <width>1280</width>
+      <height>720</height>
+   </size>
+   <object>
+      <trackid>0</trackid>
+      <name>unknown</name>
+      <bndbox>
+         <xmax>271</xmax>
+         <xmin>143</xmin>
+         <ymax>578</ymax>
+         <ymin>195</ymin>
+      </bndbox>
+      <occluded>0</occluded>
+      <generated>0</generated>
+   </object>
+</annotation>
