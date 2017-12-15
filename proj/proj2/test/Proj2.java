@@ -249,20 +249,36 @@ public class Proj2 {
 			}
 
 			/***********************/
+			Que show_temp = null ;
 			System.out.println("IF Unit:");
 			System.out.println("Pre-Issue Que:");
-			if (!Pre_issue_Que.isEmpty()) {
-				System.out.println(deassems[Pre_issue_Que.peek()]);
+			while (!Pre_issue_Que.isEmpty()) {
+				show_temp.push(Pre_issue_Que.pop());
+				System.out.println(deassems[show_temp.peek()]);	
 			}
+			while( show_temp!= null && !show_temp.isEmpty()) {
+				Pre_issue_Que.push(show_temp.pop());
+			}
+			
 			System.out.println("Pre-ALU1 Que");
-			if (!Pre_ALU1_Que.isEmpty()) {
-				System.out.println(deassems[Pre_ALU1_Que.peek()]);
+			while (!Pre_ALU1_Que.isEmpty()) {
+				show_temp.push(Pre_ALU1_Que.pop());
+				System.out.println(deassems[show_temp.peek()]);	
 			}
+			while(show_temp!= null && !show_temp.isEmpty()) {
+				Pre_ALU1_Que.push(show_temp.pop());
+			}
+			
 			System.out.println("Pre-ALU2 Que:");
 			while (!Pre_ALU2_Que.isEmpty()) {
-				System.out.println(deassems[Pre_ALU2_Que.pop()]);
+				show_temp.push(Pre_ALU2_Que.pop());
+				System.out.println(deassems[show_temp.peek()]);	
 			}
-
+			while(show_temp!= null && !show_temp.isEmpty()) {
+				Pre_ALU2_Que.push(show_temp.pop());
+			}
+			
+			
 			// show reg
 			System.out.println("GPR");
 			/*

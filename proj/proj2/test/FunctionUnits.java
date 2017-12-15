@@ -233,19 +233,35 @@ public class FunctionUnits {
 			}
 			
 			/***********************/
+			Queue show_temp = new Queue(4) ;
 			System.out.println("IF Unit:");
-			System.out.println("Pre-Issue Queue:");
-			if (!Pre_issue_queue.isEmpty()) {
-				System.out.println(deassems[Pre_issue_queue.peek()]);
+			System.out.println("Pre-Issue Que:");
+			while (!Pre_issue_queue.isEmpty()) {
+				show_temp.push(Pre_issue_queue.pop());
+				System.out.println(deassems[show_temp.peek()]);	
 			}
-			System.out.println("Pre-ALU1 Queue");
-			if (!Pre_ALU1_queue.isEmpty()) {
-				System.out.println(deassems[Pre_ALU1_queue.peek()]);
+			while( show_temp!= null && !show_temp.isEmpty()) {
+				Pre_issue_queue.push(show_temp.pop());
 			}
-			System.out.println("Pre-ALU2 Queue:");
+			
+			System.out.println("Pre-ALU1 Que");
+			while (!Pre_ALU1_queue.isEmpty()) {
+				show_temp.push(Pre_ALU1_queue.pop());
+				System.out.println(deassems[show_temp.peek()]);	
+			}
+			while(show_temp!= null && !show_temp.isEmpty()) {
+				Pre_ALU1_queue.push(show_temp.pop());
+			}
+			
+			System.out.println("Pre-ALU2 Que:");
 			while (!Pre_ALU2_queue.isEmpty()) {
-				System.out.println(deassems[Pre_ALU2_queue.pop()]);
+				show_temp.push(Pre_ALU2_queue.pop());
+				System.out.println(deassems[show_temp.peek()]);	
 			}
+			while(show_temp!= null && !show_temp.isEmpty()) {
+				Pre_ALU2_queue.push(show_temp.pop());
+			}
+			
 			
 			// show reg
 			System.out.println("GPR");
