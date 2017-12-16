@@ -3,6 +3,7 @@ import java.io.FileReader;
 
 import com.sun.org.apache.xml.internal.serializer.ElemDesc;
 
+import jdk.internal.dynalink.beans.StaticClass;
 import jdk.management.resource.internal.FutureWrapper;
 import jdk.nashorn.internal.objects.Global;
 
@@ -63,6 +64,9 @@ public class test {
 	public static void main(String[] args) throws Exception {
 
 		QUEUE Pre_ISSUE_QUEUE = new QUEUE(4);
+		QUEUE Waiting_QUEUE = new QUEUE(1);
+		QUEUE Executed_QUEUE = new QUEUE(1);
+
 		QUEUE Pre_ALU1_QUEUE = new QUEUE(2);
 		QUEUE Pre_ALU2_QUEUE = new QUEUE(2);
 		QUEUE Pre_MEM_QUEUE = new QUEUE(1);
@@ -100,7 +104,7 @@ public class test {
 
 		while (is_go) {
 			System.out.println("");
-			System.out.println("cycle:" + Cycle);
+			System.out.println("***********************  cycle : " + Cycle);
 
 			WriteBack(MEM_cache, ALU2_cache, Post_MEM_QUEUE, Post_ALU2_QUEUE, GPR, Data, GPR_state);
 
@@ -112,7 +116,8 @@ public class test {
 
 			Exe_ISSUE(InstrSet, Pre_ISSUE_QUEUE, Pre_ALU1_QUEUE, Pre_ALU2_QUEUE, GPR_state);
 
-			instr_count = Execute_IF(deassems, Pre_ISSUE_QUEUE, is_stall_last, instr_count, GPR_state, GPR, PC);
+			instr_count = Execute_IF(deassems, Pre_ISSUE_QUEUE, Waiting_QUEUE, Executed_QUEUE, is_stall_last,
+					instr_count, GPR_state, GPR, PC, is_go);
 			//
 			if (Cycle > 30) {
 				is_go = false;
@@ -121,6 +126,25 @@ public class test {
 			/***********************/
 			QUEUE show_temp = new QUEUE(4);
 			System.out.println("IF Unit:");
+
+			System.out.println("Waiting Que:");
+			while (!Waiting_QUEUE.isEmpty()) {
+				System.out.println(deassems[Waiting_QUEUE.peek()]);
+				show_temp.push(Waiting_QUEUE.pop());
+			}
+			while (show_temp != null && !show_temp.isEmpty()) {
+				Waiting_QUEUE.push(show_temp.pop());
+			}
+
+			System.out.println("Executed Que:");
+			while (!Executed_QUEUE.isEmpty()) {
+				System.out.println(deassems[Executed_QUEUE.peek()]);
+				show_temp.push(Executed_QUEUE.pop());
+			}
+			while (show_temp != null && !show_temp.isEmpty()) {
+				Executed_QUEUE.push(show_temp.pop());
+			}
+
 			System.out.println("Pre-Issue Que:");
 			while (!Pre_ISSUE_QUEUE.isEmpty()) {
 				System.out.println(deassems[Pre_ISSUE_QUEUE.peek()]);
@@ -139,6 +163,24 @@ public class test {
 				Pre_ALU1_QUEUE.push(show_temp.pop());
 			}
 
+			System.out.println("Pre-MEM Que:");
+			while (!Pre_MEM_QUEUE.isEmpty()) {
+				System.out.println(deassems[Pre_MEM_QUEUE.peek()]);
+				show_temp.push(Pre_MEM_QUEUE.pop());
+			}
+			while (show_temp != null && !show_temp.isEmpty()) {
+				Pre_MEM_QUEUE.push(show_temp.pop());
+			}
+
+			System.out.println("Post-MEM Que:");
+			while (!Post_MEM_QUEUE.isEmpty()) {
+				System.out.println(deassems[Post_MEM_QUEUE.peek()]);
+				show_temp.push(Post_MEM_QUEUE.pop());
+			}
+			while (show_temp != null && !show_temp.isEmpty()) {
+				Post_MEM_QUEUE.push(show_temp.pop());
+			}
+
 			System.out.println("Pre-ALU2 Que:");
 			while (!Pre_ALU2_QUEUE.isEmpty()) {
 				System.out.println(deassems[Pre_ALU2_QUEUE.peek()]);
@@ -148,85 +190,131 @@ public class test {
 				Pre_ALU2_QUEUE.push(show_temp.pop());
 			}
 
-			// show reg
-			System.out.println("GPR_state");
-
-			for (int i = 0; i < GPR_state.length; i++) {
-				if (i % 8 == 0) {
-					System.out.println("");
-				}
-				System.out.print(GPR_state[i] + "\t");
+			System.out.println("Post-ALU2 Que:");
+			while (!Post_ALU2_QUEUE.isEmpty()) {
+				System.out.println(deassems[Post_ALU2_QUEUE.peek()]);
+				show_temp.push(Post_ALU2_QUEUE.pop());
 			}
+			while (show_temp != null && !show_temp.isEmpty()) {
+				Post_ALU2_QUEUE.push(show_temp.pop());
+			}
+			// show reg
+			System.out.println();
+			System.out.println("GPR_state");
 			/*
-			 * // show Data System.out.println("Data"); for (int i = 0; i < Data.length;
-			 * i++) { if (i % 8 == 0) { System.out.println(""); } System.out.print(Data[i] +
-			 * "\t"); }
+			 * for (int i = 0; i < GPR_state.length; i++) { if (i % 8 == 0) {
+			 * System.out.println(""); } System.out.print(GPR_state[i] + "\t"); } /* // show
+			 * Data System.out.println("Data"); for (int i = 0; i < Data.length; i++) { if
+			 * (i % 8 == 0) { System.out.println(""); } System.out.print(Data[i] + "\t"); }
 			 */
 			Cycle++;
 		}
 	}
 
-	private static int Execute_IF(String[] InstrSet, QUEUE Pre_ISSUE_QUEUE, boolean[] is_stall_last, int instr_count,
-			String[] reg_state, int[] GPR, int PC) throws Exception {
+	private static int Execute_IF(String[] InstrSet, QUEUE Pre_ISSUE_QUEUE, QUEUE Waiting_QUEUE, QUEUE Executed_QUEUE,
+			boolean[] is_stall_last, int instr_count, String[] reg_state, int[] GPR, int PC, boolean is_go)
+			throws Exception {
 		// TODO Auto-generated method stub
 		is_stall_last[0] = false;
 		String WaitingInstr;
 		String ExecutedInstr;
-		int Instru_1;
-		int Instru_2;
-		int goto_instru = 0;
+		int FetchInstr1;
+		int FetchInstr2;
+		int[] goto_instru = new int[2];
 
-		switch (4 - Pre_ISSUE_QUEUE.size()) {
-		case 0:
-			return instr_count;
-		case 1:
-			if (!is_stall_last[0]) {
-				int FetchInstr1 = instr_count++;
-
-				if (is_BranchInstru(FetchInstr1, InstrSet, goto_instru, PC, reg_state, GPR, is_stall_last,
-						instr_count)) {
-					if (!is_stall_last[0]) {
-						instr_count = goto_instru;
-					}
-					return instr_count;
+		if (!Waiting_QUEUE.isEmpty()) {
+			int Waiting_Instru = Waiting_QUEUE.pop();
+			if (is_BranchInstru(Waiting_Instru, InstrSet, goto_instru, PC, reg_state, GPR, is_stall_last)) {
+				if (!is_stall_last[0]) {
+					instr_count = goto_instru[0];
+					Executed_QUEUE.push(Waiting_Instru);
+					// return instr_count;
 				} else {
-					Pre_ISSUE_QUEUE.push(FetchInstr1);
+					Waiting_QUEUE.push(Waiting_Instru);
+					return Waiting_Instru;
 				}
-			} else {
+			}
+		} else {
+
+			switch (4 - Pre_ISSUE_QUEUE.size()) {
+			case 0:
 				return instr_count;
-			}
-			break;
-		case 2:
-		case 3:
-		case 4:
-			if (!is_stall_last[0]) {
-				int FetchInstr1 = instr_count++;
+			case 1:
 
-				if (is_BranchInstru(FetchInstr1, InstrSet, goto_instru, PC, reg_state, GPR, is_stall_last,
-						instr_count)) {
+				FetchInstr1 = Executed_QUEUE.isEmpty() ? instr_count++ : Executed_QUEUE.pop();
+				// is BREAK
+				if (is_BREAK(FetchInstr1, InstrSet)) {
+					is_go = false;
+					break;
+				}
+				// is not BREAK
+				if (is_BranchInstru(FetchInstr1, InstrSet, goto_instru, PC, reg_state, GPR, is_stall_last)) {
 					if (!is_stall_last[0]) {
-						instr_count = goto_instru;
+						instr_count = goto_instru[0];
+						Pre_ISSUE_QUEUE.push(instr_count ++ );
+					} else {
+						Waiting_QUEUE.push(FetchInstr1);
+						return FetchInstr1;
 					}
-					return instr_count;
+
 				} else {
 					Pre_ISSUE_QUEUE.push(FetchInstr1);
-					int FetchInstr2 = instr_count++;
-					if (is_BranchInstru(FetchInstr2, InstrSet, goto_instru, PC, reg_state, GPR, is_stall_last,
-							instr_count)) {
-						if (!is_stall_last[0]) {
-							instr_count = goto_instru;
-						}
-						return instr_count;
-					} else {
-						Pre_ISSUE_QUEUE.push(FetchInstr2);
-					}
 				}
+
+				break;
+			case 2:
+			case 3:
+			case 4:
+				// get the first instru
+				FetchInstr1 = Executed_QUEUE.isEmpty() ? instr_count++ : Executed_QUEUE.pop();
+
+				// is BREAK
+				if (is_BREAK(FetchInstr1, InstrSet)) {
+					is_go = false;
+					break;
+				}
+
+				if (is_BranchInstru(FetchInstr1, InstrSet, goto_instru, PC, reg_state, GPR, is_stall_last)) {
+					if (!is_stall_last[0]) {
+						instr_count = goto_instru[0];
+						Pre_ISSUE_QUEUE.push(instr_count ++);
+					} else {
+						Waiting_QUEUE.push(FetchInstr1);
+						return FetchInstr1;
+					}
+				} else {
+					Pre_ISSUE_QUEUE.push(FetchInstr1);
+				}
+				// get the second instr
+				FetchInstr2 = instr_count++;
+
+				// is BREAK
+				if (is_BREAK(FetchInstr2, InstrSet)) {
+					is_go = false;
+					break;
+				}
+
+				if (is_BranchInstru(FetchInstr2, InstrSet, goto_instru, PC, reg_state, GPR, is_stall_last)) {
+					if (!is_stall_last[0]) {
+						instr_count = goto_instru[0];
+						Pre_ISSUE_QUEUE.push(instr_count ++);
+					} else {
+						Waiting_QUEUE.push(FetchInstr2);
+						return FetchInstr2;
+					}
+
+				} else {
+					Pre_ISSUE_QUEUE.push(FetchInstr2);
+				}
+
+				break;
+			default:
+				break;
 			}
-			break;
-		default:
-			break;
+
 		}
 		return instr_count;
+
 	}
 
 	private static void Exe_ISSUE(String[] InstruSet, QUEUE Pre_ISSUE_QUEUE, QUEUE Pre_ALU1_QUEUE, QUEUE Pre_ALU2_QUEUE,
@@ -241,7 +329,7 @@ public class test {
 
 		while (!Pre_ISSUE_QUEUE.isEmpty()) {
 			Instru_1_addr = Pre_ISSUE_QUEUE.pop();
-			
+
 			if (is_SW_LW(Instru_1_addr, InstruSet) && !issued_ALU1) {
 				if (!Harzed(Instru_1_addr, InstruSet, Reg_state) && !Pre_ALU1_QUEUE.isFull()) {
 					Pre_ALU1_QUEUE.push(Instru_1_addr);
@@ -249,15 +337,17 @@ public class test {
 				} else {
 					Issue_temp.push(Instru_1_addr);
 				}
-			} else if (!issued_ALU2) {
+			} else if (!is_SW_LW(Instru_1_addr, InstruSet) && !issued_ALU2) {
 				if (!Harzed(Instru_1_addr, InstruSet, Reg_state) && !Pre_ALU2_QUEUE.isFull()) {
 					Pre_ALU2_QUEUE.push(Instru_1_addr);
-					issued_ALU1 = true;
-
+					issued_ALU2 = true;
 				} else {
 					Issue_temp.push(Instru_1_addr);
 				}
+			} else {
+				Issue_temp.push(Instru_1_addr);
 			}
+
 		}
 		while (!Issue_temp.isEmpty()) {
 			Pre_ISSUE_QUEUE.push(Issue_temp.pop());
@@ -559,8 +649,8 @@ public class test {
 			case "0111":
 				// code = "LW " + "R" + rt_11_16 + ", " + offset + "(R" + base + ")";
 				// GPR[rt_11_16] = Data[(offset - Data_address + GPR[base]) / 4];
-				cache[0] = Data[(offset - Data_address + GPR[base]) / 4];
-				cache[1] = rt_11_16;
+				cache[0] = rt_11_16;
+				cache[1] = Data[(offset - Data_address + GPR[base]) / 4];
 				post_MEM_QUEUE.push(Inst_addr);
 				return cache;
 			default:
@@ -595,8 +685,8 @@ public class test {
 		}
 	}
 
-	private static boolean is_BranchInstru(int instru, String[] Inset, int goto_instr, int PC, String[] GPR_state,
-			int[] GPR, boolean[] is_stall_last, int instru_count) {
+	private static boolean is_BranchInstru(int instru, String[] Inset, int[] goto_instru, int PC, String[] GPR_state,
+			int[] GPR, boolean[] is_stall_last) {
 		// 解析出来指令码及指令类型
 		String in_type = Inset[instru].substring(0, 2);
 		String in_opcode = Inset[instru].substring(2, 6);
@@ -621,7 +711,7 @@ public class test {
 				// code = "J " + "#" + instr_index;
 				// instr_count = instr_index;
 				is_stall_last[0] = false;
-				goto_instr = (instr_index - PC) / 4;
+				goto_instru[0] = (instr_index - PC) / 4;
 				break;
 			// JR
 			case "0001":
@@ -630,7 +720,7 @@ public class test {
 				if (GPR_state[rs_6_11] != null) {
 					is_stall_last[0] = true;
 				} else {
-					goto_instr = (GPR[rs_6_11] - PC) / 4;
+					goto_instru[0] = (GPR[rs_6_11] - PC) / 4;
 				}
 				break;
 			// BEQ
@@ -640,9 +730,9 @@ public class test {
 					is_stall_last[0] = true;
 				} else if (GPR[rs_6_11] == GPR[rt_11_16]) {
 					// instr_count = PC + offset_left2 + 4;
-					goto_instr = (offset_left2 + 4) / 4;
+					goto_instru[0] = (offset_left2 + 4) / 4;
 				} else {
-					goto_instr = instru_count;
+					goto_instru[0] = instru + 1;
 				}
 				break;
 
@@ -653,9 +743,9 @@ public class test {
 					is_stall_last[0] = true;
 				} else if (GPR[rs_6_11] < 0) {
 					// instr_count = PC + offset_left2 + 4;
-					goto_instr = (offset_left2 + 4) / 4;
+					goto_instru[0] = (offset_left2 + 4) / 4;
 				} else {
-					goto_instr = instru_count;
+					goto_instru[0] = instru + 1;
 				}
 				break;
 			// BGTZ
@@ -665,9 +755,9 @@ public class test {
 					is_stall_last[0] = true;
 				} else if (GPR[rs_6_11] > 0) {
 					// instr_count = PC + offset_left2 + 4;
-					goto_instr = (offset_left2 + 4) / 4;
+					goto_instru[0] = (offset_left2 + 4) / 4;
 				} else {
-					goto_instr = instru_count;
+					goto_instru[0] = instru + 1;
 				}
 				break;
 			default:
@@ -680,8 +770,22 @@ public class test {
 
 	}
 
+	private static boolean is_BREAK(int FetchInstr1, String[] instrSet) {
+		// TODO Auto-generated method stub
+		String Instru = instrSet[FetchInstr1];
+
+		String in_type = Instru.substring(0, 2);
+		String in_opcode = Instru.substring(2, 6);
+
+		if (in_type.equals("01") && (in_opcode.equals("0101") || in_opcode.equals("1011"))) {
+			return true;
+		}
+		return false;
+	}
+
 	private static boolean Harzed(int Instr_addr, String[] InstruSet, String[] GPR_state) {
 		//
+
 		String Instr_now = InstruSet[Instr_addr];
 		// 解析出来指令码及指令类型
 		String in_type = Instr_now.substring(0, 2);
@@ -1148,242 +1252,6 @@ public class test {
 			}
 		}
 		return string_result;
-	}
-
-	private static void GPR_and_Data(String[] Inst, int[] GPR, int[] Data, int PC, String OutPutFile,
-			int Data_address) {
-		// TODO Auto-generated method stub
-		int PC_now = PC;
-		int len = Inst.length;
-		String[] string_result = new String[len];
-		int PC_base = PC;
-		boolean is_break = false;
-		int cycle = 1;
-		for (int i = 0; !is_break; i = ((PC_now - PC_base) / 4)) {
-			// System.out.println("--------------------");
-			// System.out.print("Cycle:" + cycle + "\t" + PC_now + "\t");
-			String temp;
-			String code = null;
-			if (!is_break) {
-				// 解析出来指令码及指令类型
-				String in_type = Inst[i].substring(0, 2);
-				String in_opcode = Inst[i].substring(2, 6);
-				// 解析需要的操作数
-				int rs_6_11 = Integer.parseInt(Inst[i].substring(6, 11), 2);
-				int base = rs_6_11;
-				int rt_11_16 = Integer.parseInt(Inst[i].substring(11, 16), 2);
-				int rd_16_21 = Integer.parseInt(Inst[i].substring(16, 21), 2);
-				// SLL sa
-				int sa = Integer.parseInt(Inst[i].substring(21, 26), 2);
-
-				int immediate = Integer.parseInt(Inst[i].substring(16, 32), 2);
-				int offset = immediate;
-				int offset_left2 = offset << 2;
-
-				// J target
-				int instr_index = Integer.parseInt(Inst[i].substring(6, 32), 2) << 2;
-
-				if (in_type.equals("01")) {
-					switch (in_opcode) {
-					// J
-					case "0000":
-						code = "J " + "#" + instr_index;
-
-						PC_now = instr_index;
-						break;
-					// JR
-					case "0001":
-						code = "JR " + "R" + rs_6_11;
-
-						PC_now = GPR[rs_6_11];
-						break;
-					// BEQ
-					case "0010":
-						code = "BEQ " + "R" + rs_6_11 + ", R" + rt_11_16 + ", #" + offset_left2;
-
-						if (GPR[rs_6_11] == GPR[rt_11_16])
-							PC_now = PC + offset_left2 + 4;
-						break;
-					// BLTZ
-					case "0011":
-						code = "BLTZ " + "R" + rs_6_11 + ", #" + offset_left2;
-
-						if (GPR[rs_6_11] < 0)
-							PC_now = PC + offset_left2 + 4;
-						break;
-					// BGTZ
-					case "0100":
-						code = "BGTZ " + "R" + rs_6_11 + ", #" + offset_left2;
-
-						if (GPR[rs_6_11] > 0)
-							PC_now = PC + offset_left2 + 4;
-						break;
-					// BREAK
-					case "0101":
-						code = "BREAK";
-						// Data_address = inst_and_add + 4 ;
-						is_break = true;
-						break;
-					// SW
-					case "0110":
-						code = "SW " + "R" + rt_11_16 + ", " + offset + "(R" + base + ")";
-
-						Data[(offset - Data_address + GPR[base]) / 4] = GPR[rt_11_16];
-						break;
-					// LW
-					case "0111":
-						code = "LW " + "R" + rt_11_16 + ", " + offset + "(R" + base + ")";
-
-						GPR[rt_11_16] = Data[(offset - Data_address + GPR[base]) / 4];
-						break;
-					// SLL
-					case "1000":
-						code = "SLL " + "R" + rd_16_21 + ", R" + rt_11_16 + ", #" + sa;
-
-						GPR[rd_16_21] = GPR[rt_11_16] << sa;
-						break;
-					// SRL
-					case "1001":
-						code = "SRL " + "R" + rd_16_21 + ", R" + rt_11_16 + ", #" + sa;
-
-						GPR[rd_16_21] = GPR[rt_11_16] >> sa;
-						break;
-					// SRA
-					case "1010":
-						code = "SRA " + "R" + rd_16_21 + ", R" + rt_11_16 + ", #" + sa;
-
-						// GPR[rd_16_21] = GPR[rt_11_16] >> sa;
-						int xsrl = GPR[rt_11_16] >> sa;
-						int w = 4 << 3;
-						GPR[rd_16_21] |= (-1 << (w - sa));
-						break;
-					// NOP
-					case "1011":
-						code = "NOP";
-
-						break;
-					// default
-					default:
-
-						break;
-					}
-
-				} else if (in_type.equals("11")) {
-					switch (in_opcode) {
-					// ADD
-					case "0000":
-						code = "ADD " + "R" + rd_16_21 + ", R" + rs_6_11 + ", R" + rt_11_16;
-
-						try {
-							GPR[rd_16_21] = GPR[rs_6_11] + GPR[rt_11_16];
-						} catch (Exception e) {
-							// TODO: handle exception
-							System.out.println("SignalException(IntegerOverflow)");
-						}
-						break;
-					// SUB
-					case "0001":
-						code = "SUB " + "R" + rd_16_21 + ", R" + rs_6_11 + ", R" + rt_11_16;
-
-						try {
-							GPR[rd_16_21] = GPR[rs_6_11] - GPR[rt_11_16];
-						} catch (Exception e) {
-							// TODO: handle exception
-							System.out.println("SignalException(IntegerOverflow)");
-						}
-						break;
-					// MUL
-					case "0010":
-						code = "MUL " + "R" + rd_16_21 + ", R" + rs_6_11 + ", R" + rt_11_16;
-
-						try {
-							GPR[rd_16_21] = GPR[rs_6_11] * GPR[rt_11_16];
-						} catch (Exception e) {
-							// TODO: handle exception
-							System.out.println("SignalException(IntegerOverflow)");
-						}
-						break;
-					// AND
-					case "0011":
-						code = "AND " + "R" + rd_16_21 + ", R" + rs_6_11 + ", R" + rt_11_16;
-
-						GPR[rd_16_21] = GPR[rs_6_11] & GPR[rd_16_21];
-						break;
-					// OR
-					case "0100":
-						code = "OR " + "R" + rd_16_21 + ", R" + rs_6_11 + ", R" + rt_11_16;
-
-						GPR[rd_16_21] = GPR[rs_6_11] | GPR[rd_16_21];
-						break;
-					// XOR
-					case "0101":
-						code = "XOR " + "R" + rd_16_21 + ", R" + rs_6_11 + ", R" + rt_11_16;
-
-						GPR[rd_16_21] = GPR[rs_6_11] ^ GPR[rd_16_21];
-						break;
-					// NOR
-					case "0110":
-						code = "NOR " + "R" + rd_16_21 + ", R" + rs_6_11 + ", R" + rt_11_16;
-
-						GPR[rd_16_21] = ~(GPR[rs_6_11] | GPR[rd_16_21]);
-						break;
-					// SLT
-					case "0111":
-						code = "SLT " + "R" + rd_16_21 + ", R" + rs_6_11 + ", R" + rt_11_16;
-
-						GPR[rd_16_21] = (GPR[rs_6_11] < GPR[rd_16_21]) ? 1 : 0;
-						break;
-					// ADDI
-					case "1000":
-						code = "ADDI " + "R" + rt_11_16 + ", R" + rs_6_11 + ", #" + immediate;
-
-						try {
-							GPR[rt_11_16] = GPR[rs_6_11] + immediate;
-						} catch (Exception e) {
-							// TODO: handle exception
-							System.out.println("SignalException(IntegerOverflow)");
-						}
-						break;
-					// ANDI
-					case "1001":
-						code = "ANDI " + "R" + rt_11_16 + ", R" + rs_6_11 + ", #" + immediate;
-
-						GPR[rd_16_21] = GPR[rs_6_11] & immediate;
-						break;
-					// ORI
-					case "1010":
-						code = "ORI " + "R" + rt_11_16 + ", R" + rs_6_11 + ", #" + immediate;
-
-						GPR[rt_11_16] = GPR[rs_6_11] | immediate;
-						break;
-					// XORI
-					case "1011":
-						code = "XORI " + "R" + rt_11_16 + ", R" + rs_6_11 + ", #" + immediate;
-
-						GPR[rt_11_16] = GPR[rs_6_11] ^ immediate;
-						break;
-					// default
-					default:
-
-						break;
-					}
-				}
-				// PC is the instrument`s pc,so it is PC ,not PC_now
-				temp = "--------------------" + '\n' + "Cycle:" + cycle + "\t" + PC + "\t" + code;
-				// WriteSimulation(OutPutFile, GPR, temp + '\n' + '\n' + "Registers", "r",
-				// Data_address);
-				// WriteSimulation(OutPutFile, Data, "Data", "d",Data_address);
-
-			} else {
-
-				break;
-			}
-
-			PC_now = (PC_now == PC) ? (PC_now + 4) : PC_now;
-			PC = PC_now;
-			cycle++;
-		}
-
 	}
 
 	private static String[] readtxt(String input_path) {
