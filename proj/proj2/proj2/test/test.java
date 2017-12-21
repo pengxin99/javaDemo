@@ -97,12 +97,14 @@ public class test {
 		int[] ALU1_cache = null;
 		int[] ALU2_cache = null;
 		int[] MEM_cache = null;
+		int [][] Update_cache = new int[2][2];
+		
 		int issue_sum = 0;
 		while (is_go[0]) {
 			System.out.println("");
 			System.out.println("***********************  cycle : " + Cycle);
 
-			WriteBack(MEM_cache, ALU2_cache, Post_MEM_QUEUE, Post_ALU2_QUEUE, GPR, Data, GPR_state, ISSUED_INSTRU,
+			Update_cache = WriteBack(MEM_cache, ALU2_cache, Post_MEM_QUEUE, Post_ALU2_QUEUE, GPR, Data, GPR_state, ISSUED_INSTRU,
 					element_del,update);
 
 			MEM_cache = MEM(Pre_MEM_QUEUE, Post_MEM_QUEUE, InstrSet, Data, GPR, Data_address, element_del,update);
@@ -117,7 +119,7 @@ public class test {
 			instr_count = Execute_IF(deassems, Pre_ISSUE_QUEUE, Waiting_QUEUE, Executed_QUEUE, is_stall_last,
 					instr_count, GPR_state, GPR, PC, is_go, ISSUED_INSTRU ,issue_sum);
 			if (update[0]) {
-				Delete_element(ISSUED_INSTRU, element_del);
+				Delete_element(ISSUED_INSTRU, element_del,GPR_state, Update_cache);
 			}
 			//
 			if (Cycle > 35) {
@@ -650,8 +652,11 @@ public class test {
 
 	}
 
-	private static void WriteBack(int[] MEM_cache, int[] ALU2_cache, QUEUE Post_MEM_QUEUE, QUEUE Post_ALU2_QUEUE,
+	private static int[][] WriteBack(int[] MEM_cache, int[] ALU2_cache, QUEUE Post_MEM_QUEUE, QUEUE Post_ALU2_QUEUE,
 			int[] GPR, int[] Data, String[] GPR_state, QUEUE ISSUED_INSTRU, int[] element_del,boolean[] update) throws Exception {
+		int[][] WriteCache = new int[2][2] ;
+		
+		
 		if (MEM_cache == null) {
 			System.out.println("ALU1 write null");
 		} else {
@@ -659,10 +664,11 @@ public class test {
 			int Data_des = MEM_cache[0];
 			int Data_Data = MEM_cache[1];
 			GPR[Data_des] = Data_Data;
-			GPR_state[Data_des] = null;
+//			GPR_state[Data_des] = null;
 			// Delete_element(ISSUED_INSTRU, Post_MEM_QUEUE.pop() );
 			element_del[0] = Post_MEM_QUEUE.pop();
 			update[0] = true;
+			WriteCache[1] = MEM_cache ; 
 		}
 
 		if (ALU2_cache == null) {
@@ -673,13 +679,15 @@ public class test {
 			int PRG_Data = ALU2_cache[1];
 			// test
 			GPR[PRG_des] = PRG_Data;
-			GPR_state[PRG_des] = null;
+//			GPR_state[PRG_des] = null;
 			element_del[1] = Post_ALU2_QUEUE.pop();
 			update[0] = true;
+			WriteCache[1] = ALU2_cache ;
 		}
+		return WriteCache ;
 	}
 
-	private static void Delete_element(QUEUE ISSUED_INSTRU, int[] element_del) throws Exception {
+	private static void Delete_element(QUEUE ISSUED_INSTRU, int[] element_del, String [] Reg_state ,int[][] update_cache) throws Exception {
 		// TODO Auto-generated method stub
 		QUEUE temp = new QUEUE(20);
 		
@@ -695,6 +703,15 @@ public class test {
 		while (!temp.isEmpty()) {
 			ISSUED_INSTRU.push(temp.pop());
 		}
+		}
+		
+		if (update_cache[0] != null) {
+			Reg_state[update_cache[0][0]] = null;
+			update_cache[0] = null ;
+		}
+		if (update_cache[1] != null) {
+			Reg_state[update_cache[1][0]] = null ;
+			update_cache[1] = null;
 		}
 	}
 
