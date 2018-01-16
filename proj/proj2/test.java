@@ -73,8 +73,9 @@ public class test {
 
 		QUEUE ISSUED_INSTRU = new QUEUE(20);
 
-		String input_path = "/home/xinye/桌面/proj/proj2/sample.txt";
-		String output_path = "/home/xinye/桌面/proj/proj2/simulation_me.txt";
+	//	String input_path = "/home/xinye/桌面/proj/proj2/sample.txt";
+		String input_path = args[0] ;	
+	String output_path = "simulation_me.txt";
 		String[] InstrSet = readtxt(input_path);
 		// define register and memory
 		int[] GPR = new int[32];
@@ -97,10 +98,11 @@ public class test {
 		// Simulation and will change the register and memeory
 		// and will write the number to file every Cycle
 		// GPR_and_Data(InstrSet, GPR, Data, PC, "simulation.txt",Data_address);
-
+		/*
 		for (int i = 0; deassems[i] != null; i++) {
 			System.out.println(deassems[i]);
 		}
+		*/
 
 		int Cycle = 1;
 		int instr_count = 0;
@@ -115,8 +117,8 @@ public class test {
 
 		int issue_sum = 0;
 		while (is_go[0]) {
-			System.out.println("");
-			System.out.println("***********************  cycle : " + Cycle);
+			//System.out.println("");
+			//System.out.println("***********************  cycle : " + Cycle);
 
 			Update_cache = WriteBack(MEM_cache, ALU2_cache, Post_MEM_QUEUE, Post_ALU2_QUEUE, GPR, Data, GPR_state,
 					ISSUED_INSTRU, element_del, update);
@@ -614,7 +616,7 @@ public class test {
 		int[][] WriteCache = new int[2][2];
 
 		if (MEM_cache == null) {
-			System.out.println("ALU1 write null");
+			//System.out.println("ALU1 write null");
 		} else {
 
 			int Data_des = MEM_cache[0];
@@ -626,7 +628,7 @@ public class test {
 		}
 
 		if (ALU2_cache == null) {
-			System.out.println("ALU2 write null");
+			//System.out.println("ALU2 write null");
 		} else {
 			int PRG_des = ALU2_cache[0];
 			int PRG_Data = ALU2_cache[1];
@@ -1669,47 +1671,47 @@ public class test {
 		
 		/***********************/
 
-		System.out.println("IF Unit:");
+		//System.out.println("IF Unit:");
 
-		System.out.println("Waiting Que:");
+		//System.out.println("Waiting Que:");
 		while (!waiting_QUEUE.isEmpty()) {
-			System.out.println(deassems[waiting_QUEUE.peek()].substring(37));
+			//System.out.println(deassems[waiting_QUEUE.peek()].substring(37));
 			show_temp.push(waiting_QUEUE.pop());
 		}
 		while (show_temp != null && !show_temp.isEmpty()) {
 			waiting_QUEUE.push(show_temp.pop());
 		}
 
-		System.out.println("Executed Que:");
+		//System.out.println("Executed Que:");
 		while (!executed_QUEUE.isEmpty()) {
-			System.out.println(deassems[executed_QUEUE.peek()].substring(37));
+			//System.out.println(deassems[executed_QUEUE.peek()].substring(37));
 			show_temp.push(executed_QUEUE.pop());
 		}
 		while (show_temp != null && !show_temp.isEmpty()) {
 			executed_QUEUE.push(show_temp.pop());
 		}
 
-		System.out.println("Pre-Issue Que:");
+		//System.out.println("Pre-Issue Que:");
 		while (!pre_ISSUE_QUEUE.isEmpty()) {
-			System.out.println(deassems[pre_ISSUE_QUEUE.peek()].substring(37));
+			//System.out.println(deassems[pre_ISSUE_QUEUE.peek()].substring(37));
 			show_temp.push(pre_ISSUE_QUEUE.pop());
 		}
 		while (show_temp != null && !show_temp.isEmpty()) {
 			pre_ISSUE_QUEUE.push(show_temp.pop());
 		}
 
-		System.out.println("Pre-ALU1 Que");
+		//System.out.println("Pre-ALU1 Que");
 		while (!pre_ALU1_QUEUE.isEmpty()) {
-			System.out.println(deassems[pre_ALU1_QUEUE.peek()].substring(37));
+			//System.out.println(deassems[pre_ALU1_QUEUE.peek()].substring(37));
 			show_temp.push(pre_ALU1_QUEUE.pop());
 		}
 		while (show_temp != null && !show_temp.isEmpty()) {
 			pre_ALU1_QUEUE.push(show_temp.pop());
 		}
 
-		System.out.println("Pre-MEM Que:");
+		//System.out.println("Pre-MEM Que:");
 		while (!pre_MEM_QUEUE.isEmpty()) {
-			System.out.println(deassems[pre_MEM_QUEUE.peek()].substring(37));
+			//System.out.println(deassems[pre_MEM_QUEUE.peek()].substring(37));
 			show_temp.push(pre_MEM_QUEUE.pop());
 		}
 		while (show_temp != null && !show_temp.isEmpty()) {
@@ -1725,18 +1727,18 @@ public class test {
 			post_MEM_QUEUE.push(show_temp.pop());
 		}
 
-		System.out.println("Pre-ALU2 Que:");
+		//System.out.println("Pre-ALU2 Que:");
 		while (!pre_ALU2_QUEUE.isEmpty()) {
-			System.out.println(deassems[pre_ALU2_QUEUE.peek()].substring(37));
+			//System.out.println(deassems[pre_ALU2_QUEUE.peek()].substring(37));
 			show_temp.push(pre_ALU2_QUEUE.pop());
 		}
 		while (show_temp != null && !show_temp.isEmpty()) {
 			pre_ALU2_QUEUE.push(show_temp.pop());
 		}
 
-		System.out.println("Post-ALU2 Que:");
+		//System.out.println("Post-ALU2 Que:");
 		while (!post_ALU2_QUEUE.isEmpty()) {
-			System.out.println(deassems[post_ALU2_QUEUE.peek()].substring(37));
+			//System.out.println(deassems[post_ALU2_QUEUE.peek()].substring(37));
 			show_temp.push(post_ALU2_QUEUE.pop());
 		}
 		while (show_temp != null && !show_temp.isEmpty()) {
