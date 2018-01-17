@@ -79,7 +79,7 @@ public class test {
 		String[] InstrSet = readtxt(input_path);
 		// define register and memory
 		int[] GPR = new int[32];
-		int[] Data = new int[16];
+		// int[] Data = new int[32];
 		String[] GPR_state = new String[32];
 		int[] element_del = new int[2];
 		boolean[] SW_Write_done = new boolean[2];
@@ -94,7 +94,14 @@ public class test {
 		int[] ALU2_instru = new int[2];
 
 		// decode,and return disassemble Strings
-		String[] deassems = decode(InstrSet, Data, PC, Data_address);
+		// String[] deassems = decode(InstrSet, Data, PC, Data_address);
+		int []  data_1 = new int [100] ;
+		int [] count = new int [2] ;
+		String [] deassems = decode(InstrSet, data_1, PC, Data_address, count);
+		int [] Data = new int [count[0]] ;
+		for (int i = 0; i<count[0] ;i++ ) {
+			Data[i] = data_1[i] ;
+		}
 		// Simulation and will change the register and memeory
 		// and will write the number to file every Cycle
 		// GPR_and_Data(InstrSet, GPR, Data, PC, "simulation.txt",Data_address);
@@ -1302,7 +1309,7 @@ public class test {
 
 	}
 
-	private static String[] decode(String[] Inst, int[] Data, int PC, int[] data_address) {
+	private static String[] decode(String[] Inst, int[] Data, int PC, int[] data_address,int [] count) {
 		int len = Inst.length;
 		String[] string_result = new String[len];
 		int address = PC;
@@ -1484,10 +1491,13 @@ public class test {
 				string_result[i] = inst_and_add + Data_temp;
 				Data[Data_count] = Data_temp;
 
+
+
 				Data_count++;
 				address += 4;
 			}
 		}
+		count[0] = Data_count ;
 		return string_result;
 	}
 
@@ -1544,8 +1554,8 @@ public class test {
 		}
 		writer.write('\n');
 		writer.write("\nData" + "\n");
-		for (int i = 0; i < Data.length; i++) {
-
+		// for (int i = 0; i < Data.length; i++) {
+		for (int i = 0; i<Data.length ;i++) {
 			if (i % 8 == 0 && i < Data.length - 1) {
 				writer.write(data_addr[0] + i * 4 + ":");
 			}
