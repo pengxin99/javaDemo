@@ -37,17 +37,22 @@ def find_paper_links(url):
 def visit_url():
 	# 总的访问量
     count = 0
+    circle = 50
     url = input('Please input the url:')
-    url = 'https://blog.csdn.net/sinat_34022298?viewmode=contents'
+    # url = 'https://blog.csdn.net/sinat_34022298?viewmode=contents'
     links = find_paper_links(url)
     print(links)
-    for i in range(len(links)):
-        page_url = 'https:/' + links[i]
-        print(page_url)
-        # 访问网页
-        url_open(page_url)
-        count += 1
-        print("this is NO: " + str(count))
+    for j in range(circle):
+        
+        for i in range(len(links)):
+            page_url = 'https:/' + links[i]
+            print(page_url)
+            # 访问网页
+            url_open(page_url)
+            count += 1
+            print("this is NO: " + str(count))
+        
+        
         
 # 主函数入口
 if __name__  ==  '__main__':
