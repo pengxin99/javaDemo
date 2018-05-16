@@ -1,7 +1,7 @@
 import urllib.request
 import os
 import random
-
+import time
 
 # 打开网页函数
 def url_open(url):
@@ -22,7 +22,7 @@ def find_paper_links(url):
     a = html.find('<a href="https://blog.csdn.net/sinat_')
 
     while a != -1:
-        b = html.find('title="阅读次数">', a , a + 255)
+        b = html.find('target="_blank"', a , a + 255)
         if b != -1:
             paper_addrs.append( html[a+16:b-2])
         else:
@@ -38,8 +38,8 @@ def visit_url():
 	# 总的访问量
     count = 0
     circle = 50
-    url = input('Please input the url:')
-    # url = 'https://blog.csdn.net/sinat_34022298?viewmode=contents'
+    # url = input('Please input the url:')
+    url = 'https://blog.csdn.net/sinat_34022298'
     links = find_paper_links(url)
     print(links)
     for j in range(circle):
@@ -51,7 +51,8 @@ def visit_url():
             url_open(page_url)
             count += 1
             print("this is NO: " + str(count))
-        
+
+            time.sleep(1.5)
         
         
 # 主函数入口
